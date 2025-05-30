@@ -12,8 +12,9 @@ import { chatCommunityGroup } from "./routes/chat.routes.js";
 import { privateChatRoute } from "./routes/privateChatRoutes.js";
 import { postRoutes } from "./routes/postfeedRoutes.js";
 import cookieParser from "cookie-parser";
+import { app, io, server } from "./socket/socket.js";
 
-const app = express();
+// const app = express();
 app.use(cookieParser());
 app.use(express.json());
 app.use(
@@ -36,7 +37,7 @@ app.use("/api/communityGroupChat", chatCommunityGroup); // finished
 app.use("/api/privateChat", privateChatRoute); // finished
 app.use("/api/postFeed", postRoutes);
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   connection();
   console.log(`Server started...${PORT}`);
 });

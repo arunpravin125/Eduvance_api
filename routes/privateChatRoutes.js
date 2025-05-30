@@ -32,6 +32,8 @@ privateChatRoute.get("/participant", protectRoutes, async (req, res) => {
       return {
         chatRoomId: chat._id,
         participant: otherUser,
+        lastMessage: chat?.lastMessage,
+        lastMessageAt: chat?.lastMessageAt,
       };
     });
 
@@ -62,24 +64,47 @@ privateChatRoute.post("/send/:recipientId", protectRoutes, async (req, res) => {
       });
     }
 
+    // 2. Create the new message
     const newMessage = {
       sender: userId,
       content,
       media,
+      sentAt: new Date(),
+      seenBy: [],
+      deletedFor: [],
+      reactions: [],
+      chatRoomId: chat._id,
     };
 
+    // 3. Push to messages array
     chat.messages.push(newMessage);
 
-    // Restore chat for both sender and recipient if previously deleted
+    // 4. Update lastMessage and lastMessageAt
+    chat.lastMessage = {
+      user: userId,
+      message: content || media[0]?.type + " message",
+    };
+    chat.lastMessageAt = new Date();
+
+    // 5. Restore chat if deleted
     chat.deletedFor = chat.deletedFor.filter(
       (id) =>
         id.toString() !== userId.toString() &&
         id.toString() !== recipientId.toString()
     );
 
+    // Save changes
     await chat.save();
 
-    res.status(200).json({ message: "Message sent", chatRoom: chat });
+    // Get the newly added message with populated sender
+    const latestMessage = chat.messages[chat.messages.length - 1];
+
+    await chat.populate({
+      path: "messages.sender",
+      select: "username profilePic",
+    });
+
+    res.status(200).json(chat.messages[chat.messages.length - 1]);
   } catch (err) {
     console.error("Send message error:", err);
     res.status(500).json({ error: err.message });
@@ -210,7 +235,7 @@ privateChatRoute.get(
       (msg) => !msg.deletedFor.includes(userId)
     );
 
-    res.status(200).json({ messages: visibleMessages });
+    res.status(200).json(visibleMessages);
   }
 );
 

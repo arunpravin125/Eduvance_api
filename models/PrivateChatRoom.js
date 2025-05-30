@@ -54,6 +54,7 @@ const privateMessageSchema = new mongoose.Schema({
       profilePic: String,
     },
   },
+  chatRoomId: String,
   deletedFor: [
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -76,6 +77,13 @@ const privateChatRoomSchema = new mongoose.Schema(
       { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // 👈 New field
     ],
     messages: [privateMessageSchema],
+    lastMessage: {
+      user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      message: String,
+    },
     lastMessageAt: { type: Date },
   },
   { timestamps: true }
